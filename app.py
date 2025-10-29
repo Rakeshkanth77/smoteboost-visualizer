@@ -135,6 +135,9 @@ if 'X_train' in st.session_state and 'X_resampled' in st.session_state:
     y_test = st.session_state['y_test']
 
     from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import confusion_matrix
+    import seaborn as sns
+
     if st.sidebar.button("Train and Evaluate Models"):
         base_model = LogisticRegression()
 
@@ -148,33 +151,70 @@ if 'X_train' in st.session_state and 'X_resampled' in st.session_state:
 
         st.subheader("Model Evaluation Metrics")
 
-        metrics_df = pd.DataFrame({
-            "Metric": list(metrics_original.keys()),
-            "Original Data": list(metrics_original.values()),
-            "After SMOTE": list(metrics_resampled.values())
-        })
+        # Side-by-side comparison of metrics
+        col1, col2 = st.columns(2)
 
-        st.table(metrics_df.set_index("Metric"))
+        with col1:
+            st.write("**Metrics: Original Data**")
+            metrics_df_original = pd.DataFrame({
+                "Metric": list(metrics_original.keys()),
+                "Score": list(metrics_original.values())
+            })
+            st.table(metrics_df_original.set_index("Metric"))
 
-                # Graphical Metrics
-        st.subheader("Graphical Comparison of Metrics")
-        fig, ax = plt.subplots(figsize=(8, 4))
-        metrics = list(metrics_original.keys())
-        original_scores = list(metrics_original.values())
-        smote_scores = list(metrics_resampled.values())
+        with col2:
+            st.write("**Metrics: After SMOTE**")
+            metrics_df_resampled = pd.DataFrame({
+                "Metric": list(metrics_resampled.keys()),
+                "Score": list(metrics_resampled.values())
+            })
+            st.table(metrics_df_resampled.set_index("Metric"))
 
-        bar_width = 0.35
-        index = range(len(metrics))
+        # Side-by-side comparison of confusion matrices
+        st.subheader("Confusion Matrices")
 
-        ax.bar(index, original_scores, bar_width, label="Original Data", color="skyblue")
-        ax.bar([i + bar_width for i in index], smote_scores, bar_width, label="After SMOTE", color="lightgreen")
+        col3, col4 = st.columns(2)
 
-        ax.set_xlabel("Metrics")
-        ax.set_ylabel("Scores")
-        ax.set_title("Comparison of Metrics Before and After SMOTE")
-        ax.set_xticks([i + bar_width / 2 for i in index])
-        ax.set_xticklabels(metrics)
-        ax.legend()
+        with col3:
+            st.write("**Confusion Matrix: Original Data**")
+            cm_original = confusion_matrix(y_test, y_pred_original)
+            fig_cm_original, ax_cm_original = plt.subplots(figsize=(4, 4))
+            sns.heatmap(cm_original, annot=True, fmt='d', cmap='Blues', ax=ax_cm_original)
+            ax_cm_original.set_xlabel("Predicted")
+            ax_cm_original.set_ylabel("Actual")
+            ax_cm_original.set_title("Original Data")
+            st.pyplot(fig_cm_original)
 
-        plt.tight_layout()
-        st.pyplot(fig)
+        with col4:
+            st.write("**Confusion Matrix: After SMOTE**")
+            cm_resampled = confusion_matrix(y_test, y_pred_resampled)
+            fig_cm_resampled, ax_cm_resampled = plt.subplots(figsize=(4, 4))
+            sns.heatmap(cm_resampled, annot=True, fmt='d', cmap='Greens', ax=ax_cm_resampled)
+            ax_cm_resampled.set_xlabel("Predicted")
+            ax_cm_resampled.set_ylabel("Actual")
+            ax_cm_resampled.set_title("After SMOTE")
+            st.pyplot(fig_cm_resampled)
+
+        # Plot Distribution of Predictions
+        st.subheader("Distribution of Predicted Classes")
+
+        from visualizer.visualizer import Visualizer
+        st.subheader("Distribution of Predicted Classes before SMOTE")
+        fig_dist_original = Visualizer.plot_distribution(y_test, pd.Series(y_pred_original))
+        st.pyplot(fig_dist_original)
+
+        st.subheader("Distribution of Predicted Classes after SMOTE")
+        fig_dist_resampled = Visualizer.plot_distribution(y_test, pd.Series(y_pred_resampled))
+        st.pyplot(fig_dist_resampled)
+
+        # Plot ROC Curves
+        st.subheader("ROC Curves")
+        st.subheader("ROC Curve before SMOTE")
+        fig_roc_original = Visualizer.plot_roc_curve(model_original, X_test, y_test)
+        st.pyplot(fig_roc_original)
+
+        st.subheader("ROC Curve after SMOTE")
+        fig_roc_resampled = Visualizer.plot_roc_curve(model_resampled, X_test, y_test)
+        st.pyplot(fig_roc_resampled)    
+
+        st.success("✓ Models Trained and Evaluated")
