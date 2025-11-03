@@ -21,8 +21,6 @@ st.info("Educational demo: Apply SMOTE to balance classes and see model impact."
 
 
 
-from data_handler import DataHandler
-
 if st.sidebar.button("Load Dataset"):  # Trigger
     X, y = DataHandler.load_data(dataset)
     X_train, X_test, y_train, y_test = DataHandler.split_data(X, y)
@@ -46,7 +44,7 @@ if 'y_train' in st.session_state:
     plt.colorbar(scatter)
     st.pyplot(fig)
 
-from smote_processor import SMOTEProcessor
+from smote_processor.smote_processor import SMOTEProcessor
 
 # Sidebar params
 apply_smote = st.sidebar.checkbox("Apply SMOTE")  # Toggle
@@ -63,21 +61,23 @@ if st.sidebar.button("Process Data") and 'X_train' in st.session_state:
     st.session_state.y_train_bal = y_train
     st.write(f"After SMOTE: {y_train.value_counts().to_dict()}")
 
-from model_trainer import ModelTrainer
+from model_trainer.model_trainer import ModelTrainer
 
 if st.button("Train & Evaluate") and 'X_train' in st.session_state:
     # Before SMOTE
     model_before = ModelTrainer.train(st.session_state.X_train, st.session_state.y_train)
     metrics_before, cm_before = ModelTrainer.evaluate(model_before, st.session_state.X_test, st.session_state.y_test)
     st.session_state.metrics_before = metrics_before
+    st.session_state.cm_before = cm_before  # Store confusion matrix for test set before SMOTE
 
     # After SMOTE (if applied)
     if 'X_train_bal' in st.session_state:
         model_after = ModelTrainer.train(st.session_state.X_train_bal, st.session_state.y_train_bal)
         metrics_after, cm_after = ModelTrainer.evaluate(model_after, st.session_state.X_test, st.session_state.y_test)
         st.session_state.metrics_after = metrics_after
+        st.session_state.cm_after = cm_after  # Store confusion matrix for test set after SMOTE
 
-from visualizer import Visualizer
+from visualizer.visualizer import Visualizer
 
 if 'metrics_before' in st.session_state:
     col1, col2 = st.columns(2)  # Side-by-side (F-6)

@@ -1,4 +1,5 @@
 from imblearn.over_sampling import SMOTE
+import pandas as pd
 
 class SMOTEProcessor:  # HLD: SMOTE Processor
     @staticmethod
