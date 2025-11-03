@@ -1,35 +1,22 @@
-from imblearn.datasets import fetch_datasets
 import pandas as pd
+import numpy as np
+from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
-
-class DataHandler:
+class DataHandler:  # HLD: Data Handler
     @staticmethod
     def load_data(dataset_name):
-        datasets = fetch_datasets()
-        if dataset_name not in datasets:
-            raise ValueError(f"Dataset {dataset_name} not found in imblearn datasets.")
-        data = datasets[dataset_name]
-        n_features = data.data.shape[1]
-        feature_names = [f"Feature_{i}" for i in range(n_features)]
-        X = pd.DataFrame(data.data, columns=feature_names)
-        y = pd.Series(data.target)
-
-        return X, y, y.value_counts().to_dict(), X.columns.tolist()
+        """Load imbalanced dataset (F-1). Returns X, y as DataFrames."""
+        if dataset_name == "Imbalanced Binary (make_classification)":
+            X, y = make_classification(n_samples=1000, n_features=2, n_redundant=0,
+                                      n_clusters_per_class=1, weights=[0.9, 0.1], random_state=42)  # Imbalanced
+        else:
+            raise ValueError("Invalid dataset")
+        X = pd.DataFrame(X, columns=['Feature1', 'Feature2'])
+        y = pd.Series(y)
+        return X, y
 
     @staticmethod
-    def split_data(X,y):
-        return train_test_split(X, y, test_size=0.2, random_state=42)
-        
-
-datasets = fetch_datasets()
-for name in list(datasets.keys())[:3]:
-    data = datasets[name]
-    print(f"\nDataset: {name}")
-    print(f"  Shape: {data.data.shape}")
-    print(f"  Has feature_names: {hasattr(data, 'feature_names')}")
-    if hasattr(data, 'feature_names'):
-        print(f"  Features: {data.feature_names}")
-    else:
-        print(f"  Features: Generic names (Feature_0, Feature_1, ...)")
-        
+    def split_data(X, y, test_size=0.2):
+        """Split 80/20 (LLD)."""
+        return train_test_split(X, y, test_size=test_size, random_state=42, stratify=y)

@@ -1,25 +1,24 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
 
-class ModelTrainer:
+class ModelTrainer:  # HLD: Model Trainer
     @staticmethod
-    def train(X_train, y_train, model):
+    def train(X_train, y_train):
+        """Train classifier (F-4)."""
+        model = LogisticRegression(random_state=42)
         model.fit(X_train, y_train)
         return model
-    
+
     @staticmethod
-    def evaluate(X_test, y_test, model):
+    def evaluate(model, X_test, y_test):
+        """Compute metrics (F-5). Returns dict."""
         y_pred = model.predict(X_test)
-        y_pred_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
-
+        y_prob = model.predict_proba(X_test)[:, 1]
         metrics = {
-            "accuracy": accuracy_score(y_test, y_pred),
-            "precision": precision_score(y_test, y_pred, zero_division=0),
-            "recall": recall_score(y_test, y_pred, zero_division=0),
-            "f1_score": f1_score(y_test, y_pred, zero_division=0),
-            "roc_auc": roc_auc_score(y_test, y_pred_proba)
+            'Accuracy': accuracy_score(y_test, y_pred),
+            'Precision': precision_score(y_test, y_pred),
+            'Recall': recall_score(y_test, y_pred),
+            'F1': f1_score(y_test, y_pred),
+            'ROC-AUC': roc_auc_score(y_test, y_prob)
         }
-
-        if y_pred_proba is None:
-             metrics["roc_auc"] = roc_auc_score(y_test, y_pred)
-
-        return metrics, y_pred
+        return metrics, confusion_matrix(y_test, y_pred)
